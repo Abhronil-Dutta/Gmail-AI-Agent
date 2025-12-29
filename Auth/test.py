@@ -28,7 +28,8 @@ class TestAuth():
     
     def ExpiredTokenTest(self):
         print("\n--- Testing Expired Token ---")
-        
+        # TODO: Need to figure out how to automatically expire a token for testing
+        # To expire a token right now, go to the token file and change the date of expiry
         if os.path.exists(self.path_to_tokens):
             service = auth(self.test_user)
             if service:
@@ -82,6 +83,10 @@ class TestAuth():
 
 if __name__ == "__main__":
     tester = TestAuth()
-    tester.NormalAuthTest()
+    tester.NormalAuthTest() # Passed
+    tester.ExpiredTokenTest() # Passed 
+    tester.HttpErrorTest() # Need to figure out how to raise a HttpError to test
+    tester.InvalidTokenTest() # Passed
+    tester.SomeOtherErrorTest() # Failed need better error handling
 
     
