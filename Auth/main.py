@@ -9,7 +9,10 @@ from googleapiclient.errors import HttpError
 import os
 
 # TODO: Add more Scopes
-SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+SCOPES = ["https://www.googleapis.com/auth/gmail.readonly", 
+          "https://www.googleapis.com/auth/gmail.compose", 
+          "https://www.googleapis.com/auth/gmail.send",
+        ]
 
 
 def auth(user: str, port: int = 52088):
