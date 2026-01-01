@@ -40,10 +40,13 @@ def get_message(service, message_id: str, format : str = "full"):
     except HttpError as e:
         raise RuntimeError(f"Got get_message error: {e}") from e
 
+
+    wanted_headers = {'From', 'Delivered-To', 'Subject', 'Date', 'Cc', 'Bcc', 'Reply-To', 'Message-ID', 'Recieved'}
     #Extract the Headers
     headers = {
         h['name']: h['value']
         for h in msg.get('payload', {}).get('headers', [])
+        if h['name'] in wanted_headers
     }
 
     # Body
@@ -74,3 +77,59 @@ def get_message(service, message_id: str, format : str = "full"):
             "body_text": body_text,
             "raw": msg.get('raw')  # may be present if requested
         }
+
+# --- Tool : Create a Draft ---
+
+def create_draft(service, to: str, subject: str, body: str, cc: list[str] | None = None, bcc: list[str] | None = None):
+    em = EmailMessage()
+    em['To'] = to
+    em['Subject'] = subject
+
+    if cc:
+        em['Cc'] = ", ".join(cc)
+    if bcc:
+        em['Bcc'] = ", ".join(bcc)
+    
+    em.set_content(body)
+
+    raw = _formatted_message(em.as_bytes())
+
+    try: 
+        draft = service.users().drafts().create(
+            userId='me',
+            body = {'message': raw}
+        ).execute()
+        return draft
+    except HttpError as e:
+        raise RuntimeError(f"Got create_draft error : {e}") from e
+
+# --- Tool : Send Message ---
+
+
+# This tool instantly sends a message 
+# This should be gated behind an explicit confirmation step
+# when used by an agent.
+def send_message(service, to: str,subject: str, body: str, cc: list[str] | None = None, bcc: list[str] | None = None, in_reply_to: str = None):
+
+    em = EmailMessage()
+    em['To'] = to
+    em['Subject'] = subject
+    
+    if cc:
+        em['Cc'] = ", ".join(cc)
+    if bcc:
+        em["Bcc"] = ", ".join(bcc)
+    
+    if in_reply_to:
+        em['In-Reply-To'] = in_reply_to
+        em['References'] = in_reply_to
+    
+    em.set_content(body)
+
+    raw = _formatted_message(em.as_bytes())
+
+    try:
+        sent = service.users().messages().send(userId='me', body=raw).execute()
+        return sent
+    except HttpError as e:
+        raise RuntimeError(f"Got send_message error : {e}") from e
